@@ -119,6 +119,13 @@ export default async function VisitLogPage({
             <p className="text-zinc-500 text-sm mt-0.5">moguwai-super · access_logs</p>
           </div>
           <div className="flex items-center gap-3">
+            <a
+              href={`/api/internal/log/export?key=${key}`}
+              download
+              className="text-xs px-3 py-1.5 bg-zinc-800 border border-zinc-700 text-zinc-300 rounded hover:bg-zinc-700 hover:text-white transition-colors"
+            >
+              CSV 다운로드
+            </a>
             <DeleteAllButton secretKey={key} />
             <span className="text-xs text-zinc-600 bg-zinc-900 border border-zinc-800 px-3 py-1 rounded-full">
               PRIVATE

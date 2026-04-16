@@ -10,6 +10,13 @@
 
 **배포 주소**: https://moguwai-super.vercel.app
 
+![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
+![Supabase](https://img.shields.io/badge/Supabase-green?logo=supabase)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38bdf8?logo=tailwindcss)
+![Vercel](https://img.shields.io/badge/Vercel-Deployed-black?logo=vercel)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 ---
 
 ## 화면 구성
@@ -20,7 +27,7 @@
 |--------|------|------|
 | 홈 | `/` | 신상품 · 인기 상품 소개 |
 | 상품 목록 | `/products` | 검색 · 카테고리 · 가격순 정렬 |
-| 상품 상세 | `/products/[id]` | 이미지 갤러리, 수량 선택, 장바구니 담기 / 바로 구매 |
+| 상품 상세 | `/products/[slug]` | 이미지 갤러리, 수량 선택, 장바구니 담기 / 바로 구매 |
 | 장바구니 | `/cart` | 수량 변경, 항목 삭제, 금액 계산 |
 | 주문서 | `/checkout` | 배송지 입력, 주문 확인 |
 | 주문 완료 | `/orders/complete` | 주문 접수 확인 |
@@ -34,7 +41,7 @@
 |--------|------|------|
 | 대시보드 | `/admin` | 매출 · 주문 · 상품 · 회원 통계, 매출 차트 |
 | 주문 관리 | `/admin/orders` | 주문 목록, 상태 변경 |
-| 상품 관리 | `/admin/products` | 상품 등록 · 수정 · 삭제 |
+| 상품 관리 | `/admin/products` | 상품 등록 · 수정 · 삭제 (slug URL 지원) |
 | 카테고리 관리 | `/admin/categories` | 카테고리 추가 · 수정 · 삭제 |
 | 회원 관리 | `/admin/users` | 회원 목록 조회 |
 
@@ -47,6 +54,7 @@
 | 프레임워크 | Next.js 16 (App Router), TypeScript |
 | 스타일 | Tailwind CSS v4 |
 | 백엔드 / DB | Supabase (PostgreSQL, Auth, Storage) |
+| 유효성 검사 | Zod |
 | 차트 | Recharts |
 | 배포 | Vercel |
 
@@ -60,9 +68,25 @@ npm install
 
 # 환경변수 설정
 cp .env.local.example .env.local
-# NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY 입력
+# 아래 항목 입력 후 저장
 
 # 개발 서버 실행
 npm run dev
 ```
 
+### 환경변수
+
+| 변수 | 설명 |
+|------|------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase 프로젝트 URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon 공개 키 |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service_role 키 (서버 전용) |
+| `LOG_SECRET_KEY` | 방문자 로그 뷰어 비밀키 |
+
+---
+
+## License
+
+MIT License © 2026 [MoGuWai](https://github.com/moguwai7)
+
+코드 참고는 자유롭게 하되, 그대로 복사해 배포하는 것은 삼가주세요.

@@ -10,8 +10,16 @@ import { z } from 'zod'
 
 export const productStatusSchema = z.enum(['active', 'inactive', 'deleted'])
 
+const slugSchema = z
+  .string()
+  .trim()
+  .min(1, '슬러그를 입력해주세요.')
+  .max(200)
+  .regex(/^[a-z0-9가-힣-]+$/, '슬러그는 소문자·숫자·한글·하이픈만 사용할 수 있습니다.')
+
 export const productCreateSchema = z.object({
   name: z.string().trim().min(1, '상품명을 입력해주세요.').max(200),
+  slug: slugSchema,
   description: z.string().trim().max(5000).default(''),
   price: z.coerce.number().int().min(0, '가격은 0원 이상이어야 합니다.'),
   stock: z.coerce.number().int().min(0, '재고는 0 이상이어야 합니다.'),
@@ -30,6 +38,7 @@ export type ProductCreateInput = z.infer<typeof productCreateSchema>
 export const productUpdateSchema = z
   .object({
     name: z.string().trim().min(1).max(200).optional(),
+    slug: slugSchema.optional(),
     description: z.string().trim().max(5000).optional(),
     price: z.coerce.number().int().min(0).optional(),
     stock: z.coerce.number().int().min(0).optional(),

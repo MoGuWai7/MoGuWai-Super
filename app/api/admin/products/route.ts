@@ -42,6 +42,7 @@ export async function POST(request: Request) {
       .from('products')
       .insert({
         name: input.name,
+        slug: input.slug,
         description: input.description,
         price: input.price,
         stock: input.stock,

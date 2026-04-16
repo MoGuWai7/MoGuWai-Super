@@ -44,6 +44,7 @@ export default function ProductForm({
 
   const [form, setForm] = useState({
     name: initialData?.name ?? '',
+    slug: initialData?.slug ?? '',
     description: initialData?.description ?? '',
     price: initialData?.price?.toString() ?? '',
     stock: initialData?.stock?.toString() ?? '0',
@@ -51,17 +52,38 @@ export default function ProductForm({
     status: initialData?.status ?? 'active',
     thumbnail_url: initialData?.thumbnail_url ?? '',
   })
+  // slug를 수동으로 편집했는지 추적 (이름 변경 시 자동 갱신 여부 결정)
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(!!initialData?.slug)
 
   const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({})
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string>(initialData?.thumbnail_url ?? '')
 
+  /** 상품명에서 slug 자동 생성 */
+  function generateSlug(name: string): string {
+    return name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9가-힣\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '')
+  }
+
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) {
     const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: value }))
+    if (name === 'name' && !slugManuallyEdited) {
+      // 이름 변경 시 slug 자동 갱신 (수동 편집 전까지만)
+      setForm((prev) => ({ ...prev, name: value, slug: generateSlug(value) }))
+    } else if (name === 'slug') {
+      setSlugManuallyEdited(true)
+      setForm((prev) => ({ ...prev, slug: value }))
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }))
+    }
     if (errors[name as keyof typeof form]) {
       setErrors((prev) => ({ ...prev, [name]: '' }))
     }
@@ -107,6 +129,9 @@ export default function ProductForm({
   function validate() {
     const newErrors: Partial<Record<keyof typeof form, string>> = {}
     if (!form.name.trim()) newErrors.name = '상품명을 입력해주세요.'
+    if (!form.slug.trim()) newErrors.slug = '슬러그를 입력해주세요.'
+    else if (!/^[a-z0-9가-힣-]+$/.test(form.slug.trim()))
+      newErrors.slug = '소문자·숫자·한글·하이픈만 사용할 수 있습니다.'
     const priceNum = Number(form.price)
     if (!form.price || isNaN(priceNum) || priceNum < 0)
       newErrors.price = '올바른 가격을 입력해주세요.'
@@ -128,6 +153,7 @@ export default function ProductForm({
     try {
       const payload = {
         name: form.name.trim(),
+        slug: form.slug.trim(),
         description: form.description.trim(),
         price: Number(form.price),
         stock: Number(form.stock),
@@ -188,6 +214,40 @@ export default function ProductForm({
                 transition-colors ${errors.name ? 'border-red-400' : 'border-zinc-200'}`}
             />
             {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
+          </div>
+
+          {/* Slug */}
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+              URL 슬러그 <span className="text-red-500">*</span>
+              <span className="ml-2 text-xs font-normal text-zinc-400">
+                /products/<span className="text-zinc-600">{form.slug || '슬러그'}</span>
+              </span>
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                name="slug"
+                value={form.slug}
+                onChange={handleChange}
+                placeholder="product-name-here"
+                className={`flex-1 h-11 px-3.5 rounded-lg border text-sm font-mono
+                  focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent
+                  transition-colors ${errors.slug ? 'border-red-400' : 'border-zinc-200'}`}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setSlugManuallyEdited(false)
+                  setForm((prev) => ({ ...prev, slug: generateSlug(prev.name) }))
+                }}
+                className="h-11 px-3 rounded-lg border border-zinc-200 text-xs text-zinc-500
+                  hover:bg-zinc-100 transition-colors whitespace-nowrap"
+              >
+                이름으로 재생성
+              </button>
+            </div>
+            {errors.slug && <p className="mt-1 text-xs text-red-500">{errors.slug}</p>}
           </div>
 
           {/* 설명 */}

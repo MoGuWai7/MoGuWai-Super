@@ -1,16 +1,8 @@
 /**
- * app/(shop)/products/[id]/page.tsx
+ * app/(shop)/products/[slug]/page.tsx
  *
- * 상품 상세 페이지 (/products/[id]).
- *
- * [구성]
- * - 브레드크럼: 홈 > 상품 목록 > 카테고리 > 상품명
- * - ProductGallery: 썸네일 + 추가 이미지 갤러리 (클라이언트 컴포넌트)
- * - 상품 정보: 카테고리 뱃지 · 상품명 · 가격 · 설명
- * - ProductActions: 수량 선택 + 장바구니/바로구매 버튼 (클라이언트 컴포넌트)
- *
- * [generateMetadata]
- * 상품명/설명을 동적으로 메타태그에 주입해 SEO를 최적화한다.
+ * 상품 상세 페이지 (/products/[slug]).
+ * UUID 대신 사람이 읽을 수 있는 slug로 상품을 조회한다.
  */
 
 import { notFound } from 'next/navigation'
@@ -23,16 +15,16 @@ import ProductActions from '@/components/products/product-actions'
 import type { Product } from '@/types'
 
 interface PageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { id } = await params
+  const { slug } = await params
   const supabase = await createClient()
   const { data: product } = await supabase
     .from('products')
     .select('name, description')
-    .eq('id', id)
+    .eq('slug', slug)
     .eq('status', 'active')
     .single()
 
@@ -45,13 +37,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function ProductDetailPage({ params }: PageProps) {
-  const { id } = await params
+  const { slug } = await params
   const supabase = await createClient()
 
   const { data: product } = await supabase
     .from('products')
     .select('*, categories(*)')
-    .eq('id', id)
+    .eq('slug', slug)
     .eq('status', 'active')
     .single()
 
