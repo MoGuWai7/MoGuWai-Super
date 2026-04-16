@@ -80,8 +80,6 @@ npm run dev
 |------|------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase 프로젝트 URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon 공개 키 |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service_role 키 (서버 전용) |
-| `LOG_SECRET_KEY` | 방문자 로그 뷰어 비밀키 |
 
 ---
 
