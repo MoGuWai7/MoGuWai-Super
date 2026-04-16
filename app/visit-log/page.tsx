@@ -10,6 +10,7 @@
 
 import { notFound } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { DeleteAllButton } from './delete-button'
 
 type AccessLog = {
   id: number
@@ -42,6 +43,17 @@ function formatDate(iso: string) {
   })
 }
 
+/** ISO 3166-1 alpha-2 국가 코드 → 한국어 국가명 */
+function getCountryName(code: string): string {
+  if (!code) return '-'
+  try {
+    const names = new Intl.DisplayNames(['ko'], { type: 'region' })
+    return names.of(code.toUpperCase()) ?? code
+  } catch {
+    return code
+  }
+}
+
 export default async function VisitLogPage({
   searchParams,
 }: {
@@ -59,8 +71,12 @@ export default async function VisitLogPage({
 
   const supabase = createAdminClient()
 
-  // 전체 카운트 + 페이지 데이터 병렬 조회
-  const [{ count }, { data: logs }, { data: todayData }] = await Promise.all([
+  // 전체 카운트 + 페이지 데이터 + 오늘 방문수 병렬 조회
+  const [
+    { count: totalCount },
+    { data: logs },
+    { count: todayCount },
+  ] = await Promise.all([
     supabase
       .from('access_logs')
       .select('*', { count: 'exact', head: true }),
@@ -69,19 +85,21 @@ export default async function VisitLogPage({
       .select('*')
       .order('created_at', { ascending: false })
       .range(from, to),
-    // 오늘 방문 수 (KST 기준 → UTC로 계산)
     supabase
       .from('access_logs')
-      .select('id', { count: 'exact', head: true })
-      .gte('created_at', new Date(Date.now() - 9 * 60 * 60 * 1000).toISOString().slice(0, 10) + 'T00:00:00+09:00'),
+      .select('*', { count: 'exact', head: true })
+      .gte(
+        'created_at',
+        new Date(Date.now() - 9 * 60 * 60 * 1000).toISOString().slice(0, 10) +
+          'T00:00:00+09:00',
+      ),
   ])
 
-  const totalCount = count ?? 0
-  const todayCount = (todayData as unknown as { count: number } | null)?.count
-    ?? 0
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+  const total = totalCount ?? 0
+  const today = todayCount ?? 0
+  const totalPages = Math.ceil(total / PAGE_SIZE)
 
-  // 기기 비율 계산 (현재 페이지 기준)
+  // 기기 분포 (현재 페이지 기준)
   const deviceStats = (logs ?? []).reduce<Record<string, number>>((acc, log) => {
     const l = log as AccessLog
     acc[l.device] = (acc[l.device] ?? 0) + 1
@@ -92,33 +110,51 @@ export default async function VisitLogPage({
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-mono p-6">
-      {/* 헤더 */}
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+      <div className="max-w-full mx-auto">
+
+        {/* 헤더 */}
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
             <h1 className="text-xl font-bold text-white">방문자 로그</h1>
             <p className="text-zinc-500 text-sm mt-0.5">moguwai-super · access_logs</p>
           </div>
-          <span className="text-xs text-zinc-600 bg-zinc-900 border border-zinc-800 px-3 py-1 rounded-full">
-            PRIVATE
-          </span>
+          <div className="flex items-center gap-3">
+            <DeleteAllButton secretKey={key} />
+            <span className="text-xs text-zinc-600 bg-zinc-900 border border-zinc-800 px-3 py-1 rounded-full">
+              PRIVATE
+            </span>
+          </div>
         </div>
 
         {/* 통계 카드 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <StatCard label="총 방문" value={totalCount.toLocaleString()} />
-          <StatCard label="오늘 방문 (KST)" value={todayCount.toLocaleString()} />
+          <StatCard label="총 방문" value={total.toLocaleString()} />
+          <StatCard label="오늘 방문 (KST)" value={today.toLocaleString()} />
           <StatCard
-            label="데스크탑"
+            label="데스크탑 (이 페이지)"
             value={`${deviceStats.desktop ?? 0}`}
-            sub={`/ 이 페이지 ${(logs ?? []).length}건`}
+            sub={`전체 ${(logs ?? []).length}건`}
           />
           <StatCard
-            label="모바일"
+            label="모바일 (이 페이지)"
             value={`${deviceStats.mobile ?? 0}`}
             sub={`태블릿 ${deviceStats.tablet ?? 0}`}
           />
         </div>
+
+        {/* 국가 코드 안내 */}
+        <p className="text-xs text-zinc-600 mb-3">
+          국가 코드 참고:{' '}
+          <a
+            href="https://ko.wikipedia.org/wiki/ISO_3166-1_alpha-2"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-zinc-500 underline underline-offset-2 hover:text-zinc-300 transition-colors"
+          >
+            ISO 3166-1 alpha-2 전체 목록 (Wikipedia)
+          </a>
+          {' '}— 국가명은 한국어로 자동 변환됩니다.
+        </p>
 
         {/* 로그 테이블 */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
@@ -134,8 +170,8 @@ export default async function VisitLogPage({
                   <th className="text-left px-3 py-2 font-medium whitespace-nowrap">기기</th>
                   <th className="text-left px-3 py-2 font-medium whitespace-nowrap">OS</th>
                   <th className="text-left px-3 py-2 font-medium whitespace-nowrap">브라우저</th>
-                  <th className="text-left px-3 py-2 font-medium whitespace-nowrap">경로</th>
-                  <th className="text-left px-3 py-2 font-medium whitespace-nowrap">유입</th>
+                  <th className="text-left px-3 py-2 font-medium whitespace-nowrap min-w-[200px]">경로</th>
+                  <th className="text-left px-3 py-2 font-medium whitespace-nowrap min-w-[260px]">유입</th>
                 </tr>
               </thead>
               <tbody>
@@ -146,15 +182,17 @@ export default async function VisitLogPage({
                       key={log.id}
                       className="border-b border-zinc-800/50 hover:bg-zinc-800/40 transition-colors"
                     >
-                      <td className="px-3 py-2 text-zinc-600">{from + i + 1}</td>
+                      <td className="px-3 py-2 text-zinc-600 whitespace-nowrap">{from + i + 1}</td>
                       <td className="px-3 py-2 text-zinc-400 whitespace-nowrap">
                         {formatDate(log.created_at)}
                       </td>
-                      <td className="px-3 py-2 text-zinc-300 whitespace-nowrap font-mono">
+                      <td className="px-3 py-2 text-zinc-300 whitespace-nowrap">
                         {log.ip || '-'}
                       </td>
-                      <td className="px-3 py-2 text-zinc-400">{log.country || '-'}</td>
-                      <td className="px-3 py-2 text-zinc-400">{log.city || '-'}</td>
+                      <td className="px-3 py-2 text-zinc-400 whitespace-nowrap">
+                        {getCountryName(log.country)}
+                      </td>
+                      <td className="px-3 py-2 text-zinc-400 whitespace-nowrap">{log.city || '-'}</td>
                       <td className="px-3 py-2 whitespace-nowrap">
                         <span className="text-base" title={log.device}>
                           {DEVICE_ICON[log.device] ?? '?'}
@@ -163,13 +201,13 @@ export default async function VisitLogPage({
                       </td>
                       <td className="px-3 py-2 text-zinc-400 whitespace-nowrap">{log.os || '-'}</td>
                       <td className="px-3 py-2 text-zinc-400 whitespace-nowrap">{log.browser || '-'}</td>
-                      <td className="px-3 py-2 text-emerald-400 whitespace-nowrap max-w-[180px] truncate">
+                      {/* 경로: 전체 표시, 긴 경우 줄바꿈 */}
+                      <td className="px-3 py-2 text-emerald-400 break-all">
                         {log.path || '/'}
                       </td>
-                      <td className="px-3 py-2 text-zinc-600 max-w-[160px] truncate" title={log.referer}>
-                        {log.referer
-                          ? log.referer.replace(/^https?:\/\//, '').slice(0, 40)
-                          : 'direct'}
+                      {/* 유입: 전체 URL 표시, 줄바꿈 허용 */}
+                      <td className="px-3 py-2 text-zinc-400 break-all">
+                        {log.referer || 'direct'}
                       </td>
                     </tr>
                   )
@@ -190,7 +228,7 @@ export default async function VisitLogPage({
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4 text-xs text-zinc-500">
             <span>
-              {from + 1}–{Math.min(to + 1, totalCount)} / {totalCount.toLocaleString()}건
+              {from + 1}–{Math.min(to + 1, total)} / {total.toLocaleString()}건
             </span>
             <div className="flex gap-2">
               {page > 1 && (
