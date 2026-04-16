@@ -68,7 +68,43 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
   return response
 }
 
+/** 방문 로그를 기록하지 않을 경로 접두사 */
+const SKIP_LOG_PREFIXES = ['/api/', '/visit-log', '/_next/']
+
+/** 방문 로그 비동기 전송 (fire-and-forget) */
+function sendAccessLog(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  if (SKIP_LOG_PREFIXES.some((p) => pathname.startsWith(p))) return
+
+  const ip =
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    request.headers.get('x-real-ip') ??
+    'unknown'
+
+  const logData = {
+    ip,
+    user_agent: request.headers.get('user-agent') ?? '',
+    path: pathname,
+    referer: request.headers.get('referer') ?? '',
+    country: request.headers.get('x-vercel-ip-country') ?? '',
+    city: request.headers.get('x-vercel-ip-city') ?? '',
+  }
+
+  // 응답을 기다리지 않음 — 로그 실패가 사이트 응답에 영향을 주지 않도록
+  fetch(`${request.nextUrl.origin}/api/internal/log`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Log-Key': process.env.LOG_SECRET_KEY ?? '',
+    },
+    body: JSON.stringify(logData),
+  }).catch(() => {})
+}
+
 export async function middleware(request: NextRequest) {
+  // 방문 로그 비동기 전송
+  sendAccessLog(request)
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(

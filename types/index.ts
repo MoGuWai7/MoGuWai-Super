@@ -122,6 +122,21 @@ export type OrderItemWithProduct = {
   } | null
 }
 
+/** 방문자 로그 (access_logs 테이블) */
+export type AccessLog = {
+  id: number
+  ip: string
+  user_agent: string
+  device: 'desktop' | 'mobile' | 'tablet'
+  os: string
+  browser: string
+  path: string
+  referer: string
+  country: string
+  city: string
+  created_at: string
+}
+
 /**
  * 주문 목록/요약 조회용 join 결과.
  * order_items 안에는 상품명(+썸네일)만 포함 — 목록 카드 렌더링에 필요한 최소 정보.
