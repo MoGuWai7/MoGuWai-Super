@@ -2,7 +2,7 @@
  * app/(shop)/products/[slug]/page.tsx
  *
  * 상품 상세 페이지 (/products/[slug]).
- * UUID 대신 사람이 읽을 수 있는 slug로 상품을 조회한다.
+ * 사람이 읽을 수 있는 slug를 우선 사용하되, 기존 UUID 링크도 호환한다.
  */
 
 import { notFound } from 'next/navigation'
@@ -18,15 +18,20 @@ interface PageProps {
   params: Promise<{ slug: string }>
 }
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
   const supabase = await createClient()
-  const { data: product } = await supabase
+  let query = supabase
     .from('products')
     .select('name, description')
-    .eq('slug', slug)
     .eq('status', 'active')
-    .single()
+
+  query = UUID_PATTERN.test(slug) ? query.eq('id', slug) : query.eq('slug', slug)
+
+  const { data: product } = await query.maybeSingle()
 
   if (!product) return { title: '상품을 찾을 수 없음' }
 
@@ -40,12 +45,14 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const { slug } = await params
   const supabase = await createClient()
 
-  const { data: product } = await supabase
+  let query = supabase
     .from('products')
     .select('*, categories(*)')
-    .eq('slug', slug)
     .eq('status', 'active')
-    .single()
+
+  query = UUID_PATTERN.test(slug) ? query.eq('id', slug) : query.eq('slug', slug)
+
+  const { data: product } = await query.maybeSingle()
 
   if (!product) notFound()
 

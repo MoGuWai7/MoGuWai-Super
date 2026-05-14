@@ -29,6 +29,7 @@ import toast from 'react-hot-toast'
 type CartProduct = {
   id: string
   name: string
+  slug: string
   price: number
   stock: number
   thumbnail_url: string | null
@@ -181,6 +182,7 @@ export default function CartClient({ initialItems }: CartClientProps) {
             const product = item.products
             if (!product) return null
             const isUpdating = loading === item.id
+            const productHref = `/products/${product.slug || product.id}`
 
             return (
               <div
@@ -190,7 +192,7 @@ export default function CartClient({ initialItems }: CartClientProps) {
                 style={{ opacity: isUpdating ? 0.6 : 1 }}
               >
                 {/* 썸네일 */}
-                <Link href={`/products/${product.id}`} className="flex-shrink-0">
+                <Link href={productHref} className="flex-shrink-0">
                   <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden bg-zinc-100">
                     {product.thumbnail_url ? (
                       <Image
@@ -213,7 +215,7 @@ export default function CartClient({ initialItems }: CartClientProps) {
                   {/* 상품명 + 삭제 버튼 */}
                   <div className="flex items-start justify-between gap-2">
                     <Link
-                      href={`/products/${product.id}`}
+                      href={productHref}
                       className="text-sm font-medium text-zinc-900 hover:text-zinc-600
                         transition-colors line-clamp-2"
                     >

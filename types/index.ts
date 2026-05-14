@@ -104,6 +104,7 @@ export type CartItemWithProduct = {
   products: {
     id: string
     name: string
+    slug: string
     price: number
     stock: number
     thumbnail_url: string | null
@@ -119,6 +120,7 @@ export type OrderItemWithProduct = {
   products: {
     id: string
     name: string
+    slug: string
     thumbnail_url: string | null
   } | null
 }
