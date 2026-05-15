@@ -14,17 +14,32 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { User, ShoppingBag, ChevronRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { firstJoin } from '@/lib/supabase/joins'
 import type { OrderStatus } from '@/types'
 import { ORDER_STATUS_BADGE, ORDER_STATUS_LABEL } from '@/lib/constants'
 
 export const metadata: Metadata = { title: '마이페이지' }
+
+type RecentOrder = {
+  id: string
+  status: OrderStatus
+  total_price: number
+  created_at: string
+  order_items?: {
+    products?: {
+      name: string | null
+    } | {
+      name: string | null
+    }[] | null
+  }[]
+}
 
 export default async function MypagePage() {
   const supabase = await createClient()
 
   // 로그인 확인 (미들웨어에서도 처리하지만 서버 컴포넌트에서 이중 확인)
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login?next=/mypage')
+  if (!user) redirect('/login?redirect=/mypage')
 
   // 프로필 + 최근 주문 5건 병렬 조회
   const [{ data: profile }, { data: recentOrders }] = await Promise.all([
@@ -92,9 +107,9 @@ export default async function MypagePage() {
           </div>
         ) : (
           <ul className="divide-y divide-zinc-100">
-            {(recentOrders as any[]).map((order) => {
+            {((recentOrders ?? []) as unknown as RecentOrder[]).map((order) => {
               // 대표 상품명 + 추가 수량 표시
-              const firstName = order.order_items?.[0]?.products?.name ?? '—'
+              const firstName = firstJoin(order.order_items?.[0]?.products)?.name ?? '—'
               const extra = (order.order_items?.length ?? 1) - 1
               const badge = ORDER_STATUS_BADGE[order.status as OrderStatus] ?? 'bg-zinc-100 text-zinc-600 ring-zinc-200'
 

@@ -52,7 +52,11 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirect') ?? '/'
+  const requestedRedirect = searchParams.get('redirect') ?? searchParams.get('next')
+  const redirectTo =
+    requestedRedirect?.startsWith('/') && !requestedRedirect.startsWith('//')
+      ? requestedRedirect
+      : '/'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

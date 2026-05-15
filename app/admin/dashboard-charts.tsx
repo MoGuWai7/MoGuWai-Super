@@ -148,8 +148,8 @@ export default function DashboardCharts({ dailyRevenue, categoryRevenue }: Props
               <Legend
                 iconType="circle"
                 iconSize={7}
-                formatter={(value, entry: any) => (
-                  <span style={{ fontSize: 11, color: entry.color }}>{value}</span>
+                formatter={(value) => (
+                  <span style={{ fontSize: 11, color: '#52525b' }}>{value}</span>
                 )}
               />
             </PieChart>

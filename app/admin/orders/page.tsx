@@ -16,6 +16,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { ChevronRight, ShoppingBag } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { firstJoin } from '@/lib/supabase/joins'
 import type { OrderStatus } from '@/types'
 import { ORDER_STATUS_BADGE, ORDER_STATUS_LABEL } from '@/lib/constants'
 
@@ -34,6 +35,28 @@ const STATUS_TABS = [
 
 interface PageProps {
   searchParams: Promise<{ status?: string }>
+}
+
+type AdminOrderListItem = {
+  id: string
+  status: OrderStatus
+  total_price: number
+  created_at: string
+  shipping_address: { name?: string } | null
+  users?: {
+    name: string | null
+    email: string | null
+  } | {
+    name: string | null
+    email: string | null
+  }[] | null
+  order_items?: {
+    products?: {
+      name: string | null
+    } | {
+      name: string | null
+    }[] | null
+  }[]
 }
 
 export default async function AdminOrdersPage({ searchParams }: PageProps) {
@@ -113,10 +136,10 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {(orders as any[]).map((order) => {
-                  const firstProduct = order.order_items?.[0]?.products?.name ?? '—'
+                {((orders ?? []) as unknown as AdminOrderListItem[]).map((order) => {
+                  const firstProduct = firstJoin(order.order_items?.[0]?.products)?.name ?? '—'
                   const extraCount = (order.order_items?.length ?? 1) - 1
-                  const buyer = order.users
+                  const buyer = firstJoin(order.users)
                   const badge = ORDER_STATUS_BADGE[order.status as OrderStatus] ?? 'bg-zinc-100 text-zinc-600 ring-zinc-200'
                   const label = ORDER_STATUS_LABEL[order.status as OrderStatus] ?? order.status
 

@@ -28,8 +28,9 @@ export default async function Header() {
     const [{ count }, { data: profile }] = await Promise.all([
       supabase
         .from('cart_items')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id),
+        .select('id, products!inner(status)', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('products.status', 'active'),
       supabase
         .from('users')
         .select('role')

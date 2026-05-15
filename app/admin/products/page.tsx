@@ -8,7 +8,7 @@
 
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { Plus, PackageSearch } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import type { Product, Category } from '@/types'
 import AdminProductsClient from './products-client'

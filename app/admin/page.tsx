@@ -26,12 +26,54 @@ import {
   ArrowUpRight,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { firstJoin } from '@/lib/supabase/joins'
 import DashboardCharts from './dashboard-charts'
 import type { DailyRevenue, CategoryRevenue } from './dashboard-charts'
 import type { OrderStatus } from '@/types'
 import { ORDER_STATUS_BADGE, ORDER_STATUS_LABEL } from '@/lib/constants'
 
 export const metadata: Metadata = { title: '대시보드' }
+
+type RevenueOrder = {
+  total_price: number | null
+}
+
+type WeekOrder = {
+  total_price: number | null
+  created_at: string
+}
+
+type CategoryOrderItem = {
+  price_at_order: number | null
+  quantity: number | null
+  products?: {
+    categories?: {
+      name: string | null
+    } | {
+      name: string | null
+    }[] | null
+  } | {
+    categories?: {
+      name: string | null
+    } | {
+      name: string | null
+    }[] | null
+  }[] | null
+}
+
+type RecentAdminOrder = {
+  id: string
+  status: OrderStatus
+  total_price: number
+  shipping_address: { name?: string } | null
+  order_items?: {
+    products?: {
+      name: string | null
+    } | {
+      name: string | null
+    }[] | null
+  }[]
+}
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient()
@@ -80,8 +122,8 @@ export default async function AdminDashboardPage() {
       .select('price_at_order, quantity, products(categories(name))'),
   ])
 
-  const totalRevenue = (revenueData ?? []).reduce(
-    (sum: number, o: any) => sum + (o.total_price ?? 0),
+  const totalRevenue = ((revenueData ?? []) as RevenueOrder[]).reduce(
+    (sum, o) => sum + (o.total_price ?? 0),
     0
   )
 
@@ -92,19 +134,21 @@ export default async function AdminDashboardPage() {
     const dateLabel = `${d.getMonth() + 1}/${d.getDate()}`
     const dayStart = new Date(d); dayStart.setHours(0, 0, 0, 0)
     const dayEnd = new Date(d); dayEnd.setHours(23, 59, 59, 999)
-    const revenue = (weekOrders ?? [])
-      .filter((o: any) => {
+    const revenue = ((weekOrders ?? []) as WeekOrder[])
+      .filter((o) => {
         const t = new Date(o.created_at).getTime()
         return t >= dayStart.getTime() && t <= dayEnd.getTime()
       })
-      .reduce((sum: number, o: any) => sum + (o.total_price ?? 0), 0)
+      .reduce((sum, o) => sum + (o.total_price ?? 0), 0)
     return { date: dateLabel, revenue }
   })
 
   // 카테고리별 매출 집계
   const catMap: Record<string, number> = {}
-  for (const item of categoryItems ?? []) {
-    const name = (item.products as any)?.categories?.name ?? '미분류'
+  for (const item of (categoryItems ?? []) as CategoryOrderItem[]) {
+    const product = firstJoin(item.products)
+    const category = firstJoin(product?.categories)
+    const name = category?.name ?? '미분류'
     const amount = ((item.price_at_order ?? 0) * (item.quantity ?? 0))
     catMap[name] = (catMap[name] ?? 0) + amount
   }
@@ -219,8 +263,8 @@ export default async function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {recentOrders.map((order: any) => {
-                  const firstName = order.order_items?.[0]?.products?.name ?? '—'
+                {((recentOrders ?? []) as unknown as RecentAdminOrder[]).map((order) => {
+                  const firstName = firstJoin(order.order_items?.[0]?.products)?.name ?? '—'
                   const extra = (order.order_items?.length ?? 1) - 1
                   const badge = ORDER_STATUS_BADGE[order.status as OrderStatus] ?? 'bg-zinc-100 text-zinc-600 ring-zinc-200'
                   return (

@@ -23,6 +23,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Package, ChevronLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { getErrorMessage } from '@/lib/errors'
 
 type CartProduct = {
   id: string
@@ -126,9 +127,10 @@ export default function CheckoutForm({ cartItems, defaultName, buyNow }: Checkou
       console.log('[CheckoutForm:handleSubmit] 주문 생성 성공 — 완료 페이지로 이동', { orderId })
       router.push(`/orders/complete?id=${orderId}`)
       router.refresh()
-    } catch (err: any) {
-      console.error('[CheckoutForm:handleSubmit] 주문 실패', { message: err.message })
-      toast.error(err.message ?? '주문 중 오류가 발생했습니다.')
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, '주문 중 오류가 발생했습니다.')
+      console.error('[CheckoutForm:handleSubmit] 주문 실패', { message })
+      toast.error(message)
       setLoading(false)
     }
   }

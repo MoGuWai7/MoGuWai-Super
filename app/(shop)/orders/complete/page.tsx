@@ -11,6 +11,7 @@
 
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 import { CheckCircle, Package, ChevronRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
@@ -37,7 +38,7 @@ export default async function OrderCompletePage({ searchParams }: PageProps) {
       id, status, total_price, created_at, shipping_address,
       order_items (
         id, quantity, price_at_order,
-        products (id, name, thumbnail_url)
+        products (id, name, slug, thumbnail_url)
       )
     `)
     .eq('id', id)
@@ -76,9 +77,11 @@ export default async function OrderCompletePage({ searchParams }: PageProps) {
             <li key={item.id} className="flex items-center gap-3 px-4 py-3">
               <div className="w-12 h-12 rounded-lg bg-zinc-100 shrink-0 overflow-hidden">
                 {item.products?.thumbnail_url ? (
-                  <img
+                  <Image
                     src={item.products.thumbnail_url}
-                    alt={item.products?.name}
+                    alt={item.products.name}
+                    width={48}
+                    height={48}
                     className="w-full h-full object-cover"
                   />
                 ) : (

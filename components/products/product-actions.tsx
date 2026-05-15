@@ -57,7 +57,7 @@ export default function ProductActions({ productId, stock, price }: ProductActio
       if (!user) {
         console.log('[ProductActions:handleAddToCart] 비로그인 — 로그인 페이지로 이동')
         toast.error('로그인이 필요합니다.')
-        router.push('/login')
+        router.push(`/login?redirect=/products/${productId}`)
         return
       }
 
@@ -110,7 +110,7 @@ export default function ProductActions({ productId, stock, price }: ProductActio
       if (!user) {
         console.log('[ProductActions:handleBuyNow] 비로그인 — 로그인 페이지로 이동')
         toast.error('로그인이 필요합니다.')
-        router.push(`/login?next=/products/${productId}`)
+        router.push(`/login?redirect=/products/${productId}`)
         return
       }
 

@@ -15,6 +15,7 @@ import Image from 'next/image'
 import { Search, Pencil, Trash2, Package, RotateCcw } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { Product, Category } from '@/types'
+import { getErrorMessage } from '@/lib/errors'
 
 const STATUS_MAP = {
   active: { label: '판매중', cls: 'bg-emerald-50 text-emerald-700 ring-emerald-200' },
@@ -88,9 +89,10 @@ export default function AdminProductsClient({
       )
       console.log('[AdminProductsClient:handleDeactivate] 상태 낙관적 업데이트 완료 (active → inactive)')
       toast.success('비활성으로 변경되었습니다.')
-    } catch (err: any) {
-      console.error('[AdminProductsClient:handleDeactivate] 비활성화 실패', { message: err.message })
-      toast.error(err.message ?? '오류가 발생했습니다.')
+    } catch (err: unknown) {
+      const message = getErrorMessage(err)
+      console.error('[AdminProductsClient:handleDeactivate] 비활성화 실패', { message })
+      toast.error(message)
     } finally {
       setLoadingId(null)
     }
@@ -119,9 +121,10 @@ export default function AdminProductsClient({
       setProducts((prev) => prev.filter((p) => p.id !== id))
       console.log('[AdminProductsClient:handlePermanentDelete] 목록에서 제거 완료')
       toast.success('상품이 삭제되었습니다.')
-    } catch (err: any) {
-      console.error('[AdminProductsClient:handlePermanentDelete] 실패', { message: err.message })
-      toast.error(err.message ?? '오류가 발생했습니다.')
+    } catch (err: unknown) {
+      const message = getErrorMessage(err)
+      console.error('[AdminProductsClient:handlePermanentDelete] 실패', { message })
+      toast.error(message)
     } finally {
       setLoadingId(null)
     }
@@ -146,9 +149,10 @@ export default function AdminProductsClient({
       setProducts((prev) => prev.filter((p) => p.id !== id))
       console.log('[AdminProductsClient:handleHardDelete] DB 완전 삭제 성공, 목록에서 제거')
       toast.success('상품이 완전히 삭제되었습니다.')
-    } catch (err: any) {
-      console.error('[AdminProductsClient:handleHardDelete] 실패', { message: err.message })
-      toast.error(err.message ?? '오류가 발생했습니다.')
+    } catch (err: unknown) {
+      const message = getErrorMessage(err)
+      console.error('[AdminProductsClient:handleHardDelete] 실패', { message })
+      toast.error(message)
     } finally {
       setLoadingId(null)
     }
@@ -175,9 +179,10 @@ export default function AdminProductsClient({
       )
       console.log('[AdminProductsClient:handleActivate] 낙관적 업데이트 완료 (inactive → active)')
       toast.success('판매중으로 변경되었습니다.')
-    } catch (err: any) {
-      console.error('[AdminProductsClient:handleActivate] 실패', { message: err.message })
-      toast.error(err.message ?? '오류가 발생했습니다.')
+    } catch (err: unknown) {
+      const message = getErrorMessage(err)
+      console.error('[AdminProductsClient:handleActivate] 실패', { message })
+      toast.error(message)
     } finally {
       setLoadingId(null)
     }

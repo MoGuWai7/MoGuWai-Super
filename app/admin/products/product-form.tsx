@@ -20,11 +20,11 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import { Upload, X, Package, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import type { Category, Product } from '@/types'
+import { getErrorMessage } from '@/lib/errors'
 
 interface ProductFormProps {
   categories: Category[]
@@ -118,8 +118,8 @@ export default function ProductForm({
       setForm((prev) => ({ ...prev, thumbnail_url: publicUrl }))
       setPreviewUrl(publicUrl)
       toast.success('이미지가 업로드되었습니다.')
-    } catch (err: any) {
-      toast.error(`이미지 업로드 실패: ${err.message}`)
+    } catch (err: unknown) {
+      toast.error(`이미지 업로드 실패: ${getErrorMessage(err)}`)
       setPreviewUrl(form.thumbnail_url)
     } finally {
       setUploading(false)
@@ -185,8 +185,8 @@ export default function ProductForm({
       toast.success(mode === 'create' ? '상품이 등록되었습니다.' : '상품이 수정되었습니다.')
       router.push('/admin/products')
       router.refresh()
-    } catch (err: any) {
-      toast.error(err.message ?? '오류가 발생했습니다.')
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err))
       setSubmitting(false)
     }
   }
@@ -352,6 +352,7 @@ export default function ProductForm({
           >
             {previewUrl ? (
               <>
+                {/* eslint-disable-next-line @next/next/no-img-element -- blob: preview URLs are not compatible with next/image optimization. */}
                 <img
                   src={previewUrl}
                   alt="미리보기"

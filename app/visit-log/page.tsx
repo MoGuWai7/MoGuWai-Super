@@ -43,6 +43,15 @@ function formatDate(iso: string) {
   })
 }
 
+function getKstDateString(date = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date)
+}
+
 /** ISO 3166-1 alpha-2 국가 코드 → 한국어 국가명 */
 function getCountryName(code: string): string {
   if (!code) return '-'
@@ -68,6 +77,7 @@ export default async function VisitLogPage({
   const page = Math.max(1, parseInt(params.page ?? '1', 10))
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
+  const todayStartKst = `${getKstDateString()}T00:00:00+09:00`
 
   const supabase = createAdminClient()
 
@@ -88,11 +98,7 @@ export default async function VisitLogPage({
     supabase
       .from('access_logs')
       .select('*', { count: 'exact', head: true })
-      .gte(
-        'created_at',
-        new Date(Date.now() - 9 * 60 * 60 * 1000).toISOString().slice(0, 10) +
-          'T00:00:00+09:00',
-      ),
+      .gte('created_at', todayStartKst),
   ])
 
   const total = totalCount ?? 0

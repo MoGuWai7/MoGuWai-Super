@@ -14,6 +14,7 @@
 
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 import { ChevronLeft, Package } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
@@ -25,6 +26,11 @@ export const metadata: Metadata = { title: '주문 상세' }
 
 interface PageProps {
   params: Promise<{ id: string }>
+}
+
+type OrderUser = {
+  name: string | null
+  email: string | null
 }
 
 export default async function AdminOrderDetailPage({ params }: PageProps) {
@@ -39,7 +45,7 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
       users!orders_user_id_fkey(name, email),
       order_items(
         id, quantity, price_at_order,
-        products(id, name, thumbnail_url)
+        products(id, name, slug, thumbnail_url)
       )
     `)
     .eq('id', id)
@@ -50,6 +56,7 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
   const badge = ORDER_STATUS_BADGE[order.status as OrderStatus] ?? 'bg-zinc-100 text-zinc-600 ring-zinc-200'
   const label = ORDER_STATUS_LABEL[order.status as OrderStatus] ?? order.status
   const addr = order.shipping_address as ShippingAddress
+  const orderUser = order.users as OrderUser | null
 
   return (
     <div className="p-6 lg:p-8 max-w-4xl">
@@ -108,9 +115,11 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
                     {/* 썸네일 */}
                     <div className="w-12 h-12 rounded-lg bg-zinc-100 shrink-0 overflow-hidden">
                       {item.products?.thumbnail_url ? (
-                        <img
+                        <Image
                           src={item.products.thumbnail_url}
                           alt={item.products.name}
+                          width={48}
+                          height={48}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -184,17 +193,17 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
           )}
 
           {/* 주문자 정보 */}
-          {order.users && (
+          {orderUser && (
             <div className="bg-white rounded-xl border border-zinc-200 p-4">
               <h2 className="text-sm font-semibold text-zinc-900 mb-3">주문자 정보</h2>
               <dl className="space-y-1.5 text-sm">
                 <div className="flex gap-2">
                   <dt className="text-zinc-400 w-14 shrink-0">이름</dt>
-                  <dd className="font-medium text-zinc-900">{(order.users as any).name}</dd>
+                  <dd className="font-medium text-zinc-900">{orderUser.name}</dd>
                 </div>
                 <div className="flex gap-2">
                   <dt className="text-zinc-400 w-14 shrink-0">이메일</dt>
-                  <dd className="text-zinc-700 truncate">{(order.users as any).email}</dd>
+                  <dd className="text-zinc-700 truncate">{orderUser.email}</dd>
                 </div>
               </dl>
             </div>

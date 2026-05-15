@@ -12,9 +12,9 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { ShoppingCart, Search, Menu, X, LogOut, User, LayoutDashboard } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -28,13 +28,48 @@ export default function HeaderClient({ user, cartCount, isAdmin }: HeaderClientP
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [displayCartCount, setDisplayCartCount] = useState(cartCount)
   const router = useRouter()
+  const pathname = usePathname()
+
+  useEffect(() => {
+    setDisplayCartCount(cartCount)
+  }, [cartCount])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function refreshCartCount() {
+      const supabase = createClient()
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+
+      if (!currentUser) {
+        if (!cancelled) setDisplayCartCount(0)
+        return
+      }
+
+      const { count } = await supabase
+        .from('cart_items')
+        .select('id, products!inner(status)', { count: 'exact', head: true })
+        .eq('user_id', currentUser.id)
+        .eq('products.status', 'active')
+
+      if (!cancelled) setDisplayCartCount(count ?? 0)
+    }
+
+    refreshCartCount()
+
+    return () => {
+      cancelled = true
+    }
+  }, [pathname, cartCount])
 
   async function handleLogout() {
     console.log('[HeaderClient:handleLogout] 로그아웃 시작', { userEmail: user?.email })
     const supabase = createClient()
     await supabase.auth.signOut()
     console.log('[HeaderClient:handleLogout] signOut 완료 — 로그인 페이지로 이동')
+    setDisplayCartCount(0)
     router.push('/login')
     router.refresh()
   }
@@ -108,11 +143,11 @@ export default function HeaderClient({ user, cartCount, isAdmin }: HeaderClientP
               aria-label="장바구니"
             >
               <ShoppingCart className="w-5 h-5" />
-              {cartCount > 0 && (
+              {displayCartCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1
                   flex items-center justify-center rounded-full bg-zinc-900 text-white
                   text-[10px] font-bold leading-none">
-                  {cartCount > 99 ? '99+' : cartCount}
+                  {displayCartCount > 99 ? '99+' : displayCartCount}
                 </span>
               )}
             </Link>

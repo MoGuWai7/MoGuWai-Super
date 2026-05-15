@@ -12,6 +12,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, AlertTriangle } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { getErrorMessage } from '@/lib/errors'
 
 interface Props {
   orderId: string
@@ -37,9 +38,10 @@ export default function OrderCancelButton({ orderId }: Props) {
       toast.success('주문이 취소되었습니다.')
       setOpen(false)
       router.refresh()
-    } catch (err: any) {
-      console.error('[OrderCancelButton:handleCancel] 취소 실패', { orderId, message: err.message })
-      toast.error(err.message ?? '오류가 발생했습니다.')
+    } catch (err: unknown) {
+      const message = getErrorMessage(err)
+      console.error('[OrderCancelButton:handleCancel] 취소 실패', { orderId, message })
+      toast.error(message)
     } finally {
       setLoading(false)
     }

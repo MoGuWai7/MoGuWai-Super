@@ -1,7 +1,7 @@
 /**
- * middleware.ts
+ * proxy.ts
  *
- * Next.js 미들웨어 — 모든 요청에 대해 실행되는 엣지 함수.
+ * Next.js Proxy — 모든 요청에 대해 실행되는 엣지 함수.
  *
  * [역할]
  * 1. Supabase 세션 갱신: getUser() 호출로 쿠키 기반 JWT 토큰을 자동 갱신
@@ -14,11 +14,11 @@
  *    - Content-Security-Policy 는 Supabase/Storage 를 허용하도록 화이트리스트 구성
  *
  * [주의]
- * 어드민 role 체크는 미들웨어에서는 수행하지 않는다.
+ * 어드민 role 체크는 Proxy에서는 수행하지 않는다.
  * 일반 유저가 /admin 에 접근하면 app/admin/layout.tsx 에서 role 확인 후 홈으로 리다이렉트.
  *
  * [matcher]
- * 정적 파일(_next/static, 이미지, favicon)은 미들웨어 실행에서 제외해 불필요한 오버헤드를 방지한다.
+ * 정적 파일(_next/static, 이미지, favicon)은 Proxy 실행에서 제외해 불필요한 오버헤드를 방지한다.
  */
 
 import { createServerClient } from '@supabase/ssr'
@@ -101,7 +101,7 @@ function sendAccessLog(request: NextRequest) {
   }).catch(() => {})
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // 방문 로그 비동기 전송
   sendAccessLog(request)
 

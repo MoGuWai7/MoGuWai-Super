@@ -11,9 +11,11 @@
 
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 import { ChevronLeft, ShoppingBag, ChevronRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { firstJoin } from '@/lib/supabase/joins'
 import type { OrderStatus } from '@/types'
 import { ORDER_STATUS_BADGE, ORDER_STATUS_LABEL } from '@/lib/constants'
 
@@ -34,12 +36,28 @@ interface PageProps {
   searchParams: Promise<{ status?: string }>
 }
 
+type MypageOrderListItem = {
+  id: string
+  status: OrderStatus
+  total_price: number
+  created_at: string
+  order_items?: {
+    products?: {
+      name: string | null
+      thumbnail_url: string | null
+    } | {
+      name: string | null
+      thumbnail_url: string | null
+    }[] | null
+  }[]
+}
+
 export default async function MypageOrdersPage({ searchParams }: PageProps) {
   const { status = '' } = await searchParams
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login?next=/mypage/orders')
+  if (!user) redirect('/login?redirect=/mypage/orders')
 
   // 주문 목록 조회 (상태 필터 적용)
   let query = supabase
@@ -114,8 +132,9 @@ export default async function MypageOrdersPage({ searchParams }: PageProps) {
         </div>
       ) : (
         <div className="space-y-3">
-          {(orders as any[]).map((order) => {
+          {((orders ?? []) as unknown as MypageOrderListItem[]).map((order) => {
             const items = order.order_items ?? []
+            const firstProduct = firstJoin(items[0]?.products)
             const badge = ORDER_STATUS_BADGE[order.status as OrderStatus] ?? 'bg-zinc-100 text-zinc-600 ring-zinc-200'
 
             return (
@@ -146,27 +165,32 @@ export default async function MypageOrdersPage({ searchParams }: PageProps) {
                 {/* 상품 썸네일 + 상품명 */}
                 <div className="flex items-center gap-2 mb-3">
                   <div className="flex -space-x-2">
-                    {items.slice(0, 3).map((item: any, idx: number) => (
-                      <div
-                        key={idx}
-                        className="w-10 h-10 rounded-lg border-2 border-white bg-zinc-100 overflow-hidden shrink-0"
-                      >
-                        {item.products?.thumbnail_url ? (
-                          <img
-                            src={item.products.thumbnail_url}
-                            alt={item.products?.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <ShoppingBag className="w-4 h-4 text-zinc-300" />
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                    {items.slice(0, 3).map((item, idx) => {
+                      const product = firstJoin(item.products)
+                      return (
+                        <div
+                          key={idx}
+                          className="w-10 h-10 rounded-lg border-2 border-white bg-zinc-100 overflow-hidden shrink-0"
+                        >
+                          {product?.thumbnail_url ? (
+                            <Image
+                              src={product.thumbnail_url}
+                              alt={product.name ?? ''}
+                              width={40}
+                              height={40}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <ShoppingBag className="w-4 h-4 text-zinc-300" />
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                   <p className="text-sm text-zinc-700 truncate">
-                    {items[0]?.products?.name ?? '—'}
+                    {firstProduct?.name ?? '—'}
                     {items.length > 1 && (
                       <span className="text-zinc-400"> 외 {items.length - 1}개</span>
                     )}

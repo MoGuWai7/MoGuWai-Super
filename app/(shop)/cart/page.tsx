@@ -25,7 +25,7 @@ export default async function CartPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/login?next=/cart')
+    redirect('/login?redirect=/cart')
   }
 
   const { data: cartItems } = await supabase
@@ -34,7 +34,7 @@ export default async function CartPage() {
       id,
       quantity,
       created_at,
-      products (
+      products!inner (
         id,
         name,
         slug,
@@ -45,6 +45,7 @@ export default async function CartPage() {
       )
     `)
     .eq('user_id', user.id)
+    .eq('products.status', 'active')
     .order('created_at', { ascending: true })
 
   // supabase-js 의 join 결과는 products 를 배열로 추론하지만 실제 구조는 단일 객체.

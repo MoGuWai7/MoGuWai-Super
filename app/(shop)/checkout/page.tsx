@@ -17,9 +17,33 @@
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { firstJoin } from '@/lib/supabase/joins'
 import CheckoutForm from './checkout-form'
 
 export const metadata: Metadata = { title: '주문하기' }
+
+type CartItemRow = {
+  id: string
+  quantity: number
+  products:
+    | {
+        id: string
+        name: string
+        slug: string
+        price: number
+        stock: number
+        thumbnail_url: string | null
+      }
+    | {
+        id: string
+        name: string
+        slug: string
+        price: number
+        stock: number
+        thumbnail_url: string | null
+      }[]
+    | null
+}
 
 interface PageProps {
   searchParams: Promise<{
@@ -33,7 +57,7 @@ export default async function CheckoutPage({ searchParams }: PageProps) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) redirect('/login?next=/checkout')
+  if (!user) redirect('/login?redirect=/checkout')
 
   const { data: profile } = await supabase
     .from('users')
@@ -78,7 +102,7 @@ export default async function CheckoutPage({ searchParams }: PageProps) {
     .select(`
       id,
       quantity,
-      products (
+      products!inner (
         id,
         name,
         slug,
@@ -88,15 +112,21 @@ export default async function CheckoutPage({ searchParams }: PageProps) {
       )
     `)
     .eq('user_id', user.id)
+    .eq('products.status', 'active')
     .order('created_at', { ascending: true })
 
-  const validItems = (cartItems ?? [])
-    .map((item: any) => ({
-      id: item.id,
-      quantity: item.quantity,
-      products: Array.isArray(item.products) ? item.products[0] : item.products,
-    }))
-    .filter((item) => !!item.products)
+  const validItems = ((cartItems ?? []) as CartItemRow[])
+    .map((item) => {
+      const product = firstJoin(item.products)
+      return product
+        ? {
+            id: item.id,
+            quantity: item.quantity,
+            products: product,
+          }
+        : null
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null)
 
   if (validItems.length === 0) redirect('/cart')
 

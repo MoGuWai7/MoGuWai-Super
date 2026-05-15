@@ -12,6 +12,7 @@ import { useState } from 'react'
 import { Plus, Pencil, Trash2, Tag, Check, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { Category } from '@/types'
+import { getErrorMessage } from '@/lib/errors'
 
 type CategoryWithCount = Category & { product_count: number }
 
@@ -73,9 +74,10 @@ export default function CategoriesClient({ initialCategories }: Props) {
       setNewSlug('')
       setShowAddForm(false)
       toast.success('카테고리가 추가되었습니다.')
-    } catch (err: any) {
-      console.error('[CategoriesClient:handleAdd] 실패', { message: err.message })
-      toast.error(err.message ?? '오류가 발생했습니다.')
+    } catch (err: unknown) {
+      const message = getErrorMessage(err)
+      console.error('[CategoriesClient:handleAdd] 실패', { message })
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -121,9 +123,10 @@ export default function CategoriesClient({ initialCategories }: Props) {
       console.log('[CategoriesClient:handleEdit] 수정 성공, 인라인 편집 종료')
       setEditingId(null)
       toast.success('카테고리가 수정되었습니다.')
-    } catch (err: any) {
-      console.error('[CategoriesClient:handleEdit] 실패', { message: err.message })
-      toast.error(err.message ?? '오류가 발생했습니다.')
+    } catch (err: unknown) {
+      const message = getErrorMessage(err)
+      console.error('[CategoriesClient:handleEdit] 실패', { message })
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -153,9 +156,10 @@ export default function CategoriesClient({ initialCategories }: Props) {
       setCategories((prev) => prev.filter((c) => c.id !== id))
       console.log('[CategoriesClient:handleDelete] 삭제 성공, 목록에서 제거')
       toast.success('카테고리가 삭제되었습니다.')
-    } catch (err: any) {
-      console.error('[CategoriesClient:handleDelete] 실패', { message: err.message })
-      toast.error(err.message ?? '오류가 발생했습니다.')
+    } catch (err: unknown) {
+      const message = getErrorMessage(err)
+      console.error('[CategoriesClient:handleDelete] 실패', { message })
+      toast.error(message)
     } finally {
       setLoading(false)
     }
