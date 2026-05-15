@@ -29,7 +29,6 @@ type CartItemRow = {
     | {
         id: string
         name: string
-        slug: string
         price: number
         stock: number
         thumbnail_url: string | null
@@ -37,7 +36,6 @@ type CartItemRow = {
     | {
         id: string
         name: string
-        slug: string
         price: number
         stock: number
         thumbnail_url: string | null
@@ -71,7 +69,7 @@ export default async function CheckoutPage({ searchParams }: PageProps) {
 
     const { data: product } = await supabase
       .from('products')
-      .select('id, name, slug, price, stock, thumbnail_url')
+      .select('id, name, price, stock, thumbnail_url')
       .eq('id', productId)
       .eq('status', 'active')
       .single()
@@ -79,7 +77,7 @@ export default async function CheckoutPage({ searchParams }: PageProps) {
     if (!product) redirect('/products')
 
     const safeQty = Math.min(qty, product.stock)
-    if (product.stock === 0) redirect(`/products/${product.slug || productId}`)
+    if (product.stock === 0) redirect(`/products/${productId}`)
 
     const buyNowItem = {
       id: `buynow_${productId}`,
@@ -105,7 +103,6 @@ export default async function CheckoutPage({ searchParams }: PageProps) {
       products!inner (
         id,
         name,
-        slug,
         price,
         stock,
         thumbnail_url

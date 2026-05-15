@@ -37,7 +37,6 @@ export default async function CartPage() {
       products!inner (
         id,
         name,
-        slug,
         price,
         stock,
         thumbnail_url,

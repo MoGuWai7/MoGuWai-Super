@@ -29,7 +29,6 @@ import toast from 'react-hot-toast'
 type CartProduct = {
   id: string
   name: string
-  slug: string
   price: number
   stock: number
   thumbnail_url: string | null
@@ -182,7 +181,7 @@ export default function CartClient({ initialItems }: CartClientProps) {
             const product = item.products
             if (!product) return null
             const isUpdating = loading === item.id
-            const productHref = `/products/${product.slug || product.id}`
+            const productHref = `/products/${product.id}`
 
             return (
               <div

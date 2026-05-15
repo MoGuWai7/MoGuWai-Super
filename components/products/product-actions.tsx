@@ -57,7 +57,7 @@ export default function ProductActions({ productId, stock, price }: ProductActio
       if (!user) {
         console.log('[ProductActions:handleAddToCart] 비로그인 — 로그인 페이지로 이동')
         toast.error('로그인이 필요합니다.')
-        router.push(`/login?redirect=/products/${productId}`)
+        router.push(`/login?redirect=${encodeURIComponent(`/products/${productId}`)}`)
         return
       }
 
@@ -102,6 +102,7 @@ export default function ProductActions({ productId, stock, price }: ProductActio
   async function handleBuyNow() {
     console.log('[ProductActions:handleBuyNow] 바로 구매 시작', { productId, quantity })
     setLoading(true)
+    const checkoutUrl = `/checkout?productId=${productId}&quantity=${quantity}`
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -110,11 +111,10 @@ export default function ProductActions({ productId, stock, price }: ProductActio
       if (!user) {
         console.log('[ProductActions:handleBuyNow] 비로그인 — 로그인 페이지로 이동')
         toast.error('로그인이 필요합니다.')
-        router.push(`/login?redirect=/products/${productId}`)
+        router.push(`/login?redirect=${encodeURIComponent(checkoutUrl)}`)
         return
       }
 
-      const checkoutUrl = `/checkout?productId=${productId}&quantity=${quantity}`
       console.log('[ProductActions:handleBuyNow] 결제 페이지로 이동', { checkoutUrl })
       router.push(checkoutUrl)
     } finally {

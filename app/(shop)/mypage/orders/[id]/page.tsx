@@ -52,7 +52,7 @@ export default async function MypageOrderDetailPage({ params }: PageProps) {
       id, status, total_price, created_at, shipping_address,
       order_items(
         id, quantity, price_at_order,
-        products(id, name, slug, thumbnail_url)
+        products(id, name, thumbnail_url)
       )
     `)
     .eq('id', id)
@@ -183,7 +183,7 @@ export default async function MypageOrderDetailPage({ params }: PageProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <Link
-                  href={item.products ? `/products/${item.products.slug || item.products.id}` : '/products'}
+                  href={item.products ? `/products/${item.products.id}` : '/products'}
                   className="text-sm font-medium text-zinc-900 hover:text-zinc-600
                     transition-colors truncate block"
                 >

@@ -23,15 +23,15 @@ const UUID_PATTERN =
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
+  if (!UUID_PATTERN.test(slug)) return { title: '상품을 찾을 수 없음' }
+
   const supabase = await createClient()
-  let query = supabase
+  const { data: product } = await supabase
     .from('products')
     .select('name, description')
     .eq('status', 'active')
-
-  query = UUID_PATTERN.test(slug) ? query.eq('id', slug) : query.eq('slug', slug)
-
-  const { data: product } = await query.maybeSingle()
+    .eq('id', slug)
+    .maybeSingle()
 
   if (!product) return { title: '상품을 찾을 수 없음' }
 
@@ -43,16 +43,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ProductDetailPage({ params }: PageProps) {
   const { slug } = await params
+  if (!UUID_PATTERN.test(slug)) notFound()
+
   const supabase = await createClient()
 
-  let query = supabase
+  const { data: product } = await supabase
     .from('products')
     .select('*, categories(*)')
     .eq('status', 'active')
-
-  query = UUID_PATTERN.test(slug) ? query.eq('id', slug) : query.eq('slug', slug)
-
-  const { data: product } = await query.maybeSingle()
+    .eq('id', slug)
+    .maybeSingle()
 
   if (!product) notFound()
 

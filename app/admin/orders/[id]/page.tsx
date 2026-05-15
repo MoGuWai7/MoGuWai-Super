@@ -45,7 +45,7 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
       users!orders_user_id_fkey(name, email),
       order_items(
         id, quantity, price_at_order,
-        products(id, name, slug, thumbnail_url)
+        products(id, name, thumbnail_url)
       )
     `)
     .eq('id', id)

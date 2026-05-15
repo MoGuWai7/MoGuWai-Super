@@ -38,7 +38,7 @@ export default async function OrderCompletePage({ searchParams }: PageProps) {
       id, status, total_price, created_at, shipping_address,
       order_items (
         id, quantity, price_at_order,
-        products (id, name, slug, thumbnail_url)
+        products (id, name, thumbnail_url)
       )
     `)
     .eq('id', id)

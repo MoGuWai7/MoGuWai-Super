@@ -29,7 +29,6 @@ export type Category = {
 export type Product = {
   id: string
   name: string
-  slug: string
   description: string
   price: number
   stock: number
@@ -104,7 +103,6 @@ export type CartItemWithProduct = {
   products: {
     id: string
     name: string
-    slug: string
     price: number
     stock: number
     thumbnail_url: string | null
@@ -120,7 +118,6 @@ export type OrderItemWithProduct = {
   products: {
     id: string
     name: string
-    slug: string
     thumbnail_url: string | null
   } | null
 }
